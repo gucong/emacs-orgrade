@@ -92,8 +92,8 @@ see `org-table-get-field'."
 (defun orgrade-insert-template (&optional proceed)
   "insert the template for a score board file."
   (interactive
-   (if (= (point-max) 1) (list t)
-     (yes-or-no-p "This will erase the buffer. Proceed ?")))
+   (list (if (= (point-max) 1) (list t)
+           (yes-or-no-p "This will erase the buffer. Proceed ?"))))
   (when proceed
     (erase-buffer)
     (insert orgrade-template)
