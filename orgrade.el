@@ -43,6 +43,12 @@
 
 (require 'org-table)
 
+(defun mark-line ()
+  (interactive)
+  (push-mark (point))
+  (push-mark (beginning-of-line) t t)
+  (end-of-line))
+
 (defun org-table-get-field-clean (&optional n replace)
   "Return the value of the field in column N of current row.
 text properties, leading and trailing whitepaces are discarded.
@@ -104,7 +110,7 @@ see `org-table-get-field'."
   "Go to the line of a given NAME."
   (interactive
    (list (ido-completing-read "name: " (orgrade-generate-roster) nil t)))
-  (goto-char (org-table-begin))
+  (goto-char (point-min))
   (search-forward name)
   (org-table-beginning-of-field 0))
 
@@ -136,22 +142,26 @@ see `orgrade-insert-entry'."
          (next (+ 1 (or (cadar events) 2)))
          (input (ido-completing-read "event: " (reverse events)))
          (hit (cadr (assoc input events)))
-         (col (or hit next)))
+         (col (or hit next))
+         (roster (orgrade-generate-roster)))
     (unless hit
       (goto-char (org-table-begin))
       (org-table-get-field col input))
     (loop do
-          (let* ((name (ido-completing-read "name: " (orgrade-generate-roster) nil t))
+          (let* ((name (ido-completing-read "name: " roster nil t))
                  (get-sec (save-excursion
                             (orgrade-goto-name name)
                             (org-table-get-field-clean 2))))
             (orgrade-insert-entry col name (read-string (format "sec: %s | value: " get-sec)))
-            (if sec (orgrade-insert-entry 2 name (number-to-string sec)))))))
+            (when sec (orgrade-insert-entry 2 name (number-to-string sec)))
+            (orgrade-goto-name name)
+            (mark-line)))))
 
 (defvar orgrade-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c t") 'orgrade-insert-template)
     (define-key map (kbd "C-c i") 'orgrade-multiple-entry)
+    (define-key map (kbd "C-c n") 'orgrade-goto-name)
     (define-key map (kbd "C-c e") 'org-table-export)
     map)
   "keymap for `orgrade-mode'.")
