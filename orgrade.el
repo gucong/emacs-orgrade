@@ -41,7 +41,18 @@
 ;; See table functionality of `org-mode' to do advanced table editting
 ;; and spreadsheet computation.
 
+;; Changelog:
+
+;; 2013/02/13
+;;     * empty score now means same as the last one
+;;
+;; 2012/01/28
+;;     * init commit
+
+
 (require 'org-table)
+(eval-when-compile
+  (require 'cl))
 
 (defun mark-line ()
   (interactive)
@@ -143,7 +154,8 @@ see `orgrade-insert-entry'."
          (input (ido-completing-read "event: " (reverse events)))
          (hit (cadr (assoc input events)))
          (col (or hit next))
-         (roster (orgrade-generate-roster)))
+         (roster (orgrade-generate-roster))
+         (saved-ent nil))
     (unless hit
       (goto-char (org-table-begin))
       (org-table-get-field col input))
@@ -151,8 +163,10 @@ see `orgrade-insert-entry'."
           (let* ((name (ido-completing-read "name: " roster nil t))
                  (get-sec (save-excursion
                             (orgrade-goto-name name)
-                            (org-table-get-field-clean 2))))
-            (orgrade-insert-entry col name (read-string (format "sec: %s | value: " get-sec)))
+                            (org-table-get-field-clean 2)))
+                 (ent (read-string (format "sec: %s | value: " get-sec))))
+            (unless (string= ent "") (setq saved-ent ent))
+            (when saved-ent (orgrade-insert-entry col name saved-ent))
             (when sec (orgrade-insert-entry 2 name (number-to-string sec)))
             (orgrade-goto-name name)
             (mark-line)))))
